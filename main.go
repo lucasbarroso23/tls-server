@@ -4,31 +4,46 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	goTLS "github.com/lucasbarroso23/poc-https/goTls"
 )
 
 func main() {
-	router := mux.NewRouter()
+	addr := flag.String("addr", ":8000", "HTTPS network address")
+	certFile := flag.String("certfile", certPath, "certificate PEM file")
+	keyFile := flag.String("keyfile", keyPath, "key PEM file")
+	flag.Parse()
 
-	_, err := BuildServerTLSConfig(certPath)
+	goTLS.GenerateCA()
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+		}
+		fmt.Fprintf(w, "Proudly served with GO and HTTPS!")
+	})
+
+	tlsConf, err := BuildServerTLSConfig(certPath)
 	if err != nil {
 		println(err.Error())
 	}
 
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("serverTLS")
-	})
-
-	server := http.Server{
-		Addr:    ":8000",
-		Handler: router,
+	srv := http.Server{
+		Addr:      *addr,
+		Handler:   mux,
+		TLSConfig: tlsConf,
 	}
 
-	fmt.Println(server.ListenAndServeTLS(certPath, keyPath))
+	log.Printf("Starting server on %s", *addr)
+	err = srv.ListenAndServeTLS(*certFile, *keyFile)
+	log.Fatal(err)
 
 }
 
