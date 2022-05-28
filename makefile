@@ -2,7 +2,7 @@ server:
 	go run .
 
 clientcred: 
-	curl --cacert "certificate.pem"  https://localhost:8000/
+	curl -Lv --cacert "certificate.pem"  https://localhost:8000/
 
 clientnocred: 
-	curl https://localhost:8000/
+	curl -Lv https://localhost:8000/

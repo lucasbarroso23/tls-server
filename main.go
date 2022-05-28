@@ -19,7 +19,10 @@ func main() {
 	keyFile := flag.String("keyfile", keyPath, "key PEM file")
 	flag.Parse()
 
-	goTLS.GenerateCA()
+	// checks if the file already exists before creating credentials
+	if caCertFile := goTLS.DirectoryOrFileExists(certPath); !caCertFile {
+		goTLS.GenerateCA()
+	}
 
 	mux := http.NewServeMux()
 
